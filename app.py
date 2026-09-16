@@ -19,11 +19,11 @@ class Visit(db.Model):
 def create_app():
     app = Flask(__name__)
 
-    db_host = os.getenv("DB_HOST", "localhost")
+    db_host = os.getenv("DB_HOST", "db")
     db_port = os.getenv("DB_PORT", "5432")
     db_name = os.getenv("DB_NAME", "visits_db")
     db_user = os.getenv("DB_USER", "app")
-    db_password = os.getenv("DB_PASSWORD", "changeme")
+    db_password = os.getenv("DB_PASSWORD", "123")
 
     database_url = (
         f"postgresql://{db_user}:{db_password}"
