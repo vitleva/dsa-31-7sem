@@ -1,8 +1,6 @@
-import logging
 import os
 from datetime import datetime, timedelta
 from dataclasses import asdict, is_dataclass
-from enum import Enum
 
 from flask import Flask, jsonify, request
 
@@ -48,8 +46,6 @@ def json_value(value):
         return {key: json_value(item) for key, item in asdict(value).items()}
     if isinstance(value, datetime):
         return value.isoformat()
-    if isinstance(value, Enum):
-        return value.value
     if isinstance(value, (list, tuple, set, frozenset)):
         return [json_value(item) for item in value]
     if isinstance(value, dict):
@@ -84,9 +80,6 @@ def session_json(session):
 def create_app():
     app = Flask(__name__)
     port = int(os.getenv("PORT", "5000"))
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
-    logging.basicConfig(level=getattr(logging, log_level, logging.INFO))
-    app.logger.setLevel(getattr(logging, log_level, logging.INFO))
 
     # Все часы, репозитории и сервис создаются один раз при запуске
     clock = SystemOffsetClock()
@@ -106,8 +99,6 @@ def create_app():
         blocked=blocked,
     )
 
-    app.extensions["parking_clock"] = clock
-    app.extensions["parking_process"] = process
 
     @app.errorhandler(Exception)
     def handle_error(error):
@@ -126,7 +117,6 @@ def create_app():
         if isinstance(error, DomainError):
             return jsonify(error="domain_error", message=str(error)), 422
         if isinstance(error, Exception):
-            app.logger.exception("Необработанная ошибка")
             return jsonify(error="internal_error", message="Внутренняя ошибка сервера"), 500
 
     @app.get("/health")

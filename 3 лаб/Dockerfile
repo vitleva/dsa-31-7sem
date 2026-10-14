@@ -16,7 +16,7 @@ COPY --from=builder /install /usr/local
 COPY --chown=app:app app.py domain.py process.py exceptions.py ./
 
 USER app
-ENV PORT=5000 LOG_LEVEL=INFO
+ENV PORT=5000
 EXPOSE 5000
 
-CMD ["sh", "-c", "gunicorn --workers 1 --bind 0.0.0.0:${PORT} --access-logfile - --error-logfile - app:app"]
+CMD ["sh", "-c", "gunicorn --workers 1 --bind 0.0.0.0:${PORT} - app:app"]
