@@ -1,4 +1,4 @@
-"""Генерация рейсов и поиск маршрутов. Здесь нет запросов к сети и БД."""
+#Генерация рейсов и поиск маршрутов
 import random
 from datetime import date, datetime, timedelta
 
@@ -11,7 +11,7 @@ AIRPORTS = [
 
 
 def flights_for_day(day, carrier, count):
-    """Одна дата и один перевозчик всегда дают одинаковые рейсы."""
+    # Одна дата и один перевозчик всегда дают одинаковые рейсы
     date.fromisoformat(day)  # Ошибка при неправильной дате
     rnd = random.Random(f'{carrier}-{day}')
     start = datetime.fromisoformat(day)
@@ -34,7 +34,7 @@ def flights_for_day(day, carrier, count):
 
 
 def build_routes(flights, origin, destination, day):
-    """До двух пересадок, ожидание 1–6 часов; вернуть 20 самых дешёвых."""
+    # До двух пересадок, ожидание 1–6 часов; вернуть 20 самых дешёвых
     departures = {}
     for flight in flights:
         # Все рейсы, в том числе после пересадок, вылетают в дату поиска.

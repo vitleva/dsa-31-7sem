@@ -1,4 +1,4 @@
-"""Четыре версии одного поиска. Выбор — переменная SERVICE_VERSION."""
+# Четыре версии одного поиска, переменная SERVICE_VERSION
 import asyncio
 import os
 import time
@@ -24,7 +24,7 @@ PROVIDERS = [os.getenv(f'PROVIDER_{i}_URL', f'http://provider{i}:8000') for i in
 
 @asynccontextmanager
 async def lifespan(app):
-    """Подключения создаются один раз при запуске приложения."""
+    # Подключения создаются один раз при запуске приложения
     if VERSION <= 2:
         app.state.db = create_engine(SYNC_URL)
     else:
@@ -48,7 +48,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 def provider_sync(url, day):
-    """requests + time.sleep, максимум 2 секунды на поставщика."""
+    # requests + time.sleep, максимум 2 секунды на поставщика
     deadline = time.monotonic() + 2
     for attempt in range(2):
         remaining = deadline - time.monotonic()
@@ -65,7 +65,7 @@ def provider_sync(url, day):
 
 
 async def provider_async(client, url, day):
-    """httpx + asyncio.sleep, один общий тайм-аут на обе попытки."""
+    # httpx + asyncio.sleep, один общий тайм-аут на обе попытки
     try:
         async with asyncio.timeout(2):
             for attempt in range(2):
@@ -101,7 +101,7 @@ def answer(start, routes, failed, own):
 
 
 def search_sync(request, origin, destination, day):
-    """Версия 1 и намеренно блокирующая версия 2."""
+    # Версия 1 и намеренно блокирующая версия 2
     start = time.perf_counter()
     own = read_sync(request.app.state.db, day)
     all_flights = own.copy()
@@ -119,7 +119,7 @@ def search_sync(request, origin, destination, day):
 
 
 async def search_async(request, origin, destination, day):
-    """Версии 3 и 4: БД и поставщики ожидаются одновременно."""
+    # Версии 3 и 4: БД и поставщики ожидаются одновременно
     start = time.perf_counter()
     tasks = [read_async(request.app.state.db, day)]
     tasks += [provider_async(request.app.state.http, url, day) for url in PROVIDERS]
@@ -147,7 +147,7 @@ async def search_async(request, origin, destination, day):
     return answer(start, routes, failed, own)
 
 
-# Версия 2: только def -> async def, остальные блокировки оставлены специально.
+# Версия 2: только def - async def, остальные блокировки оставлены специально.
 if VERSION == 1:
     @app.get('/search')
     def search(request: Request, origin: str, destination: str, date: str):
@@ -162,7 +162,7 @@ else:
         return await search_async(request, origin, destination, date)
 
 
-# В первой версии ВСЕ обработчики объявлены обычным def.
+# В первой версии все обработчики объявлены обычным def
 if VERSION == 1:
     @app.get('/health')
     def health():

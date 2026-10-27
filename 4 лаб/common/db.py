@@ -1,4 +1,4 @@
-"""PostgreSQL: таблица рейсов, заполнение, синхронное и async-чтение."""
+# таблица рейсов, заполнение, синхронное и async-чтение
 import os
 from datetime import date, datetime, timedelta
 
@@ -33,7 +33,7 @@ def day_query(day):
 
 
 def as_flights(rows):
-    """Строки БД преобразуются к формату поставщиков."""
+    # Строки БД преобразуются к формату поставщиков 
     answer = []
     for row in rows:
         flight = dict(row)
@@ -56,7 +56,7 @@ async def read_async(engine, day):
 
 
 def seed_database():
-    """120 суток по 1500 собственных рейсов, всегда одинаковых."""
+    # 120 суток по 1500 собственных рейсов, всегда одинаковых
     engine = create_engine(SYNC_URL)
     metadata.create_all(engine)
     start = date.fromisoformat(os.getenv('SEED_START_DATE', '2026-10-01'))
