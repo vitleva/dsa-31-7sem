@@ -1,0 +1,89 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-loyalty}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loyalty}
+      POSTGRES_DB: ${POSTGRES_DB:-loyalty}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-loyalty}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-loyalty}
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_listener 5672"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  worker:
+    build: ./worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-loyalty}:${POSTGRES_PASSWORD:-loyalty}@postgres:5432/${POSTGRES_DB:-loyalty}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-loyalty}:${RABBITMQ_PASSWORD:-loyalty}@rabbitmq:5672/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "from pathlib import Path; assert Path('/tmp/worker-ready').exists()"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-loyalty}:${POSTGRES_PASSWORD:-loyalty}@postgres:5432/${POSTGRES_DB:-loyalty}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-loyalty}:${RABBITMQ_PASSWORD:-loyalty}@rabbitmq:5672/
+    ports:
+      - "8000:8000"
+    depends_on:
+      worker:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  notifier:
+    build: ./notifier
+    environment:
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-loyalty}:${RABBITMQ_PASSWORD:-loyalty}@rabbitmq:5672/
+      MIN_DELAY_MS: 200
+      MAX_DELAY_MS: 1500
+      UNSUBSCRIBED: C200
+    ports:
+      - "8001:8001"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  analytics:
+    build: ./analytics
+    environment:
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-loyalty}:${RABBITMQ_PASSWORD:-loyalty}@rabbitmq:5672/
+    ports:
+      - "8002:8002"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
