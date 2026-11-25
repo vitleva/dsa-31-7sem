@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: food
+      POSTGRES_PASSWORD: food
+      POSTGRES_DB: food
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U food -d food"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+asyncpg://food:food@postgres:5432/food
+      USE_DATALOADER: ${USE_DATALOADER:-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

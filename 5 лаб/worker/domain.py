@@ -1,4 +1,4 @@
-"""Правила бонусной программы: без RabbitMQ и SQLAlchemy."""
+"""Правила бонусной программы"""
 from decimal import Decimal, ROUND_DOWN
 
 
